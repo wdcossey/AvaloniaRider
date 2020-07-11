@@ -109,6 +109,10 @@ runIde {
 
 test {
     useTestNG()
+    testLogging {
+        showStandardStreams = true
+        exceptionFormat "full"
+    }
 }
 
 apply plugin: 'com.jetbrains.rdgen'
