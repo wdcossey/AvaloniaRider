@@ -12,11 +12,12 @@ private fun fromByte(b: Byte): Int = b.toInt() and 0xFF
 
 // TODO[F]: This is very suboptimal (#40)
 private fun BufferedImage.fillWithColor(color: Color) {
-    for (y in 0 until height) {
-        for (x in 0 until width) {
-            setRGB(x, y, color.rgb)
-        }
-    }
+    val g = graphics
+    //val oColor = g.color
+    //g.color = color
+    //g.fillRect(0, 0, width, height)
+
+
 }
 
 // TODO[F]: This is very suboptimal (#40)

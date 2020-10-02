@@ -1,0 +1,30 @@
+JFDML JFormDesigner: "7.0.2.6.321" Java: "11.0.8" encoding: "UTF-8"
+
+new FormModel {
+	contentType: "form/swing"
+	root: new FormRoot {
+		add( new FormContainer( "javax.swing.JPanel", new FormLayoutManager( class java.awt.GridBagLayout ) {
+			"$columnSpecs": "0"
+			"$rowSpecs": "25, 0"
+		} ) {
+			name: "panel1"
+			"background": new com.jformdesigner.model.SwingColor( "Borders.ContrastBorderColor" )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "label2"
+				"border": new org.jdesktop.swingx.border.DropShadowBorder( sfield java.awt.Color black, 11, 0.35f, 0, true, true, true, true )
+				"text": "sdfdsdfsf"
+				"background": new com.jformdesigner.model.SwingColor( "Label.background" )
+			}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) )
+			add( new FormComponent( "javax.swing.JLabel" ) {
+				name: "label1"
+				"text": "800x600"
+			}, new FormLayoutConstraints( class com.jformdesigner.runtime.GridBagConstraintsEx ) {
+				"gridy": 1
+				"hAlign": 4
+			} )
+		}, new FormLayoutConstraints( null ) {
+			"location": new java.awt.Point( 25, 250 )
+			"size": new java.awt.Dimension( 495, 385 )
+		} )
+	}
+}
