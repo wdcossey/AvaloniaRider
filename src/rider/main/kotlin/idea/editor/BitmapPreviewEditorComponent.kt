@@ -22,6 +22,7 @@ import java.awt.image.BufferedImage
 import javax.swing.ImageIcon
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.SwingConstants
 
 class BitmapPreviewEditorComponent(lifetime: Lifetime, controller: AvaloniaPreviewerSessionController) : JPanel() {
     companion object {
@@ -29,7 +30,13 @@ class BitmapPreviewEditorComponent(lifetime: Lifetime, controller: AvaloniaPrevi
     }
 
     private val mainScrollView = JBScrollPane()
-    private val frameBufferView = lazy { JLabel() }
+    private val frameBufferView = lazy {
+        JLabel().apply {
+            verticalAlignment = SwingConstants.CENTER
+            horizontalAlignment = SwingConstants.CENTER
+        }
+    }
+
     private val spinnerView = lazy { AsyncProcessIcon.Big("Loading") }
     private val errorLabel = lazy {
         JBLabel().apply {
