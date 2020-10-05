@@ -1,6 +1,9 @@
 package me.fornever.avaloniarider.idea.editor
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
@@ -14,30 +17,34 @@ import me.fornever.avaloniarider.idea.concurrency.adviseOnUiThread
 import me.fornever.avaloniarider.plainTextToHtml
 import me.fornever.avaloniarider.previewer.AvaloniaPreviewerSessionController
 import me.fornever.avaloniarider.previewer.AvaloniaPreviewerSessionController.Status
+import me.fornever.avaloniarider.previewer.framebuffer.FrameBufferComponent
 import me.fornever.avaloniarider.previewer.nonTransparent
-import me.fornever.avaloniarider.previewer.renderFrame
-import java.awt.BorderLayout
-import java.awt.GridBagLayout
-import java.awt.image.BufferedImage
-import javax.swing.ImageIcon
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.SwingConstants
+import java.awt.*
+import javax.swing.*
+
 
 class BitmapPreviewEditorComponent(lifetime: Lifetime, controller: AvaloniaPreviewerSessionController) : JPanel() {
     companion object {
         private val logger = Logger.getInstance(BitmapPreviewEditorComponent::class.java)
     }
 
-    private val mainScrollView = JBScrollPane()
+    private val infoComponent = BitmapPreviewInformationComponent()
+    private val mainScrollView = JBScrollPane().apply {
+        this.isOpaque = false
+    }
+
     private val frameBufferView = lazy {
-        JLabel().apply {
-            verticalAlignment = SwingConstants.CENTER
-            horizontalAlignment = SwingConstants.CENTER
+        FrameBufferComponent().apply {
+
         }
     }
 
-    private val spinnerView = lazy { AsyncProcessIcon.Big("Loading") }
+    private val spinnerView = lazy {
+        AsyncProcessIcon.Big("Loading").apply {
+            isOpaque = false
+            background = UIUtil.getPanelBackground()
+        }
+    }
     private val errorLabel = lazy {
         JBLabel().apply {
             setCopyable(true)
@@ -57,9 +64,14 @@ class BitmapPreviewEditorComponent(lifetime: Lifetime, controller: AvaloniaPrevi
     init {
         layout = BorderLayout()
         add(mainScrollView, BorderLayout.CENTER)
+        add(infoComponent, BorderLayout.NORTH)
+        add(JPanel().apply {
+            this.layout = FlowLayout(FlowLayout.LEFT, 4, 4)
+        }, BorderLayout.SOUTH)
 
         controller.requestViewportResize.advise(lifetime) {
-            // TODO[F]: Update the image size for the renderer (#40)
+            frameBufferView.value.updateDimensions(it.width.toInt(), it.height.toInt())
+            infoComponent.updateDimensions(it.width.toInt(), it.height.toInt())
         }
 
         controller.status.adviseOnUiThread(lifetime, ::handleStatus)
@@ -96,13 +108,12 @@ class BitmapPreviewEditorComponent(lifetime: Lifetime, controller: AvaloniaPrevi
 
         val frameBuffer = frameBufferView.value
         if (frame.height <= 0 || frame.width <= 0) {
-            frameBuffer.icon = null
+            infoComponent.updateDimensions(0, 0)
+            frameBuffer.updateFrame(null)
             return
         }
 
-        val image = UIUtil.createImage(this, frame.width, frame.height, BufferedImage.TYPE_INT_RGB)
-        image.renderFrame(frame)
-        frameBuffer.icon = ImageIcon(image) // TODO[F]: Find a clever way to update that (#40)
+        frameBuffer.updateFrame(frame)
     }
 
     private fun handleXamlResult(message: UpdateXamlResultMessage) {
