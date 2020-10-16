@@ -5,37 +5,34 @@ import com.intellij.util.ui.UIUtil
 import me.fornever.avaloniarider.controlmessages.FrameMessage
 import java.awt.*
 import java.awt.image.BufferedImage
-import javax.swing.*
+import java.util.*
+import javax.swing.JComponent
 
 class FrameBufferComponent : JComponent() {
 
-    private var scale: Float = 1.0f
+    //private var scale: Double = 1.0
 
-    private var bufferedTileImage : BufferedImage? = null
-    private var bufferedTileBackground : Color? = null
+    private val tileCache: HashMap<Color, BufferedImage> = HashMap<Color, BufferedImage>()
 
-    private fun createTileImage(color: Color) : BufferedImage {
+    private fun getTileImage(color: Color) : BufferedImage {
 
-        if (bufferedTileImage == null || bufferedTileBackground == null || bufferedTileBackground!!.rgb != color.rgb) {
+        var cachedBitmap = tileCache[color]
 
-            bufferedTileBackground = color
-
-            bufferedTileImage = UIUtil.createImage(this, 16, 16, BufferedImage.TYPE_INT_RGB).apply {
-                var col: Int
-                var x: Int
-                var y: Int
+        if (cachedBitmap == null)
+        {
+            cachedBitmap = UIUtil.createImage(this, 16, 16, BufferedImage.TYPE_INT_RGB).apply {
 
                 var graphics2D = this.createGraphics()
 
-                val secondaryColor = if (ColorUtil.isDark(bufferedTileBackground!!)) bufferedTileBackground!!.brighter() else bufferedTileBackground!!.darker()
+                val secondaryColor = if (ColorUtil.isDark(color)) color.brighter() else color.darker()
 
                 var row = 0
                 while (row < this.height) {
-                    col = 0
+                    var col = 0
                     while (col < this.width) {
-                        x = (col * 8)
-                        y = (row * 8)
-                        if (row % 2 == col % 2) graphics2D.color = bufferedTileBackground!! else graphics2D.color = secondaryColor
+                        var x = (col * 8)
+                        var y = (row * 8)
+                        if (row % 2 == col % 2) graphics2D.color = color else graphics2D.color = secondaryColor
                         graphics2D.fillRect(x, y, 8, 8)
                         col++
                     }
@@ -44,60 +41,47 @@ class FrameBufferComponent : JComponent() {
 
                 graphics2D.dispose()
             }
+
+            this.tileCache[color] = cachedBitmap
         }
 
-        return bufferedTileImage!!
+        return cachedBitmap!!
     }
 
-
-    private val frameBufferImage = FrameBufferImage()
-
-    private val frameBufferPanel = FrameBufferPanel(frameBufferImage)
+    private val frameBufferPanel = FrameBufferPanel()
 
     fun updateDimensions(width: Int, height: Int) {
         frameBufferPanel.updateDimensions(width, height)
-        frameBufferImage.updateDimensions(width, height, true)
         this.repaint()
     }
 
     override fun paintComponent(g: Graphics) {
         super.paintComponent(g)
 
-        //Get the offset of the frameBufferPanel so we can render the texture are the correct co-ordinates
-        val offset = frameBufferPanel.getOffset()
-
-        val leftMod = offset.x % 8
-        val topMod = offset.y % 8
-
-        val checkerBoardPaint = TexturePaint(createTileImage(this.background), Rectangle(leftMod, topMod, 16, 16))
-
         val graphics2D = g as Graphics2D
+        val checkerBoardPaint = TexturePaint(getTileImage(this.background), Rectangle(0, 0, 16, 16))
+
         graphics2D.paint = checkerBoardPaint
         graphics2D.fill(graphics2D.clip)
     }
 
-    //TODO: Not implemented
-    fun decreaseScale(factor: Float) {
-        this.scale = (this.scale - factor)
-    }
+    fun isDefaultScale() = frameBufferPanel.isDefaultScale()
 
-    //TODO: Not implemented
-    fun increaseScale(factor: Float) {
-        this.scale = (this.scale + factor)
-    }
+    fun isMinimumScale() = frameBufferPanel.isMinimumScale()
 
-    fun updateFrame(frame: FrameMessage?) {
+    fun isMaximumScale() = frameBufferPanel.isMaximumScale()
 
-        val scaleWidth = ((frame?.width ?: 0) * scale).toInt()
-        val scaleHeight = ((frame?.height ?: 0) * scale).toInt()
+    fun setDefaultScale() = frameBufferPanel.setDefaultScale()
 
-        if (frameBufferImage.width != scaleWidth || frameBufferImage.height != scaleHeight)
-        {
-            updateDimensions(scaleWidth, scaleHeight)
-        }
+    fun decreaseScale() = frameBufferPanel.decreaseScale()
 
-        frameBufferImage.renderFrame(frame)
-    }
+    fun increaseScale() = frameBufferPanel.increaseScale()
+
+    fun toggleGrid() = frameBufferPanel.toggleGrid()
+
+    fun isGridVisible() = frameBufferPanel.isGridVisible()
+
+    fun updateFrame(frame: FrameMessage?) = frameBufferPanel.renderFrame(frame)
 
     init {
         layout = GridBagLayout()

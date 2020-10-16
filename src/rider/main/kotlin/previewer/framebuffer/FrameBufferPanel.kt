@@ -1,26 +1,63 @@
 package me.fornever.avaloniarider.previewer.framebuffer
 
 import com.intellij.util.ui.UIUtil
+import me.fornever.avaloniarider.controlmessages.FrameMessage
 import org.jdesktop.swingx.border.DropShadowBorder
-import java.awt.Dimension
-import java.awt.FlowLayout
-import java.awt.Insets
-import java.awt.Point
+import java.awt.*
 import javax.swing.JComponent
+import javax.swing.JLabel
 import javax.swing.border.CompoundBorder
-import javax.swing.border.EmptyBorder
+import javax.swing.border.LineBorder
 
-class FrameBufferPanel(frameBufferImage: FrameBufferImage): JComponent() {
+class FrameBufferPanel: JComponent() {
 
-    private val frameBufferImage : FrameBufferImage = frameBufferImage
+    private class CustomLineBorder(color: Color = UIUtil.getBoundsColor(), thickness: Int = 1) : LineBorder(color, 1)
+    {
+        public fun setLineColor(color: Color) {
+            super.lineColor = lineColor
+        }
+    }
 
-    fun updateDimensions(width: Int, height: Int){
+    private val frameBufferImage = lazy { FrameBufferImage() }
+
+    private var dropShadowBorder = DropShadowBorder(UIUtil.getPanelBackground().darker(), 8, 1.0f, 16, true, true, true, true)
+    private var lineBorder = CustomLineBorder(UIUtil.getBoundsColor(), 1)
+
+    fun updateDimensions(width: Int, height: Int) {
+        frameBufferImage.value.updateDimensions(width, height, true)
         this.revalidate()
     }
 
-    override fun isVisible(): Boolean {
+    fun isDefaultScale() = frameBufferImage.value.isDefaultScale()
 
-        return this.frameBufferImage.isVisible
+    fun isMinimumScale() = frameBufferImage.value.isMinimumScale()
+
+    fun isMaximumScale() = frameBufferImage.value.isMaximumScale()
+
+    fun setDefaultScale() = frameBufferImage.value.setDefaultScale()
+
+    fun decreaseScale() = frameBufferImage.value.decreaseScale()
+
+    fun increaseScale() = frameBufferImage.value.increaseScale()
+
+    fun toggleGrid() = frameBufferImage.value.toggleGrid()
+
+    fun isGridVisible() = frameBufferImage.value.isGridVisible()
+
+    fun renderFrame(frame: FrameMessage?) = frameBufferImage.value.renderFrame(frame)
+
+    fun imageWidth() = frameBufferImage.value.width
+
+    fun imageHeight() = frameBufferImage.value.height
+
+    fun imageDimension() = Dimension(imageHeight(), imageWidth())
+
+    override fun isVisible() = this.frameBufferImage.value.isVisible
+
+    override fun updateUI() {
+        dropShadowBorder.shadowColor = UIUtil.getPanelBackground().darker()
+        lineBorder.lineColor = UIUtil.getBoundsColor()
+        super.updateUI()
     }
 
     public fun getBorderSize() : Dimension {
@@ -53,11 +90,12 @@ class FrameBufferPanel(frameBufferImage: FrameBufferImage): JComponent() {
         isDoubleBuffered = true
         layout = FlowLayout(FlowLayout.CENTER, 0, 0)
         isOpaque = false
+
         border = CompoundBorder(
-            DropShadowBorder(UIUtil.getPanelBackground().darker(), 12, .75f, 12, true, true, true, true),
-            EmptyBorder(Insets(0, 0, 0, 0))
+            dropShadowBorder,
+            lineBorder
         )
 
-        add(frameBufferImage)
+        add(frameBufferImage.value)
     }
 }
